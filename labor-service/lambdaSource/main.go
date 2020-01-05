@@ -21,6 +21,7 @@ const (
 	ActionAcOn = "ac_on"
 	ActionHeaterOn = "heater_on"
 	ActionTurnedOff = "ac_off"
+	ActionCancel = "cancel"
 )
 
 const (
@@ -134,6 +135,12 @@ func laborServiceHandler(ctx context.Context, request events.APIGatewayProxyRequ
 				{
 					Name:  ActionTurnedOff,
 					Text:  "エアコンを消して",
+					Type:  "button",
+					Style: "default",
+				},
+				{
+					Name:  ActionCancel,
+					Text:  "やっぱり大丈夫",
 					Type:  "button",
 					Style: "default",
 				},
