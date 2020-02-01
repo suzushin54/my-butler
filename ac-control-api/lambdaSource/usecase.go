@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	ActionAcOn = "ac_on"
-	ActionHeaterOn = "heater_on"
+	ActionAcOn      = "ac_on"
+	ActionHeaterOn  = "heater_on"
 	ActionTurnedOff = "ac_off"
-	ActionCancel = "cancel"
+	ActionCancel    = "cancel"
 )
 
 const (
@@ -34,7 +34,7 @@ type interactiveMessageUsecase struct {
 }
 
 func NewInteractionUsecase(signingSecrets string) InteractiveMessageUsecase {
-	return &interactiveMessageUsecase{signingSecrets: signingSecrets,}
+	return &interactiveMessageUsecase{signingSecrets: signingSecrets}
 }
 
 func makeResponse(res *events.APIGatewayProxyResponse, original slack.Message, title, value string) (events.APIGatewayProxyResponse, error) {
@@ -42,12 +42,16 @@ func makeResponse(res *events.APIGatewayProxyResponse, original slack.Message, t
 		original.Attachments = []slack.Attachment{slack.Attachment{}}
 	}
 
+	original.Text = ""
+	original.ResponseType = "in_channel"
+	original.ReplaceOriginal = true
+
 	original.Attachments[0].Actions = []slack.AttachmentAction{}
 	original.Attachments[0].Fields = []slack.AttachmentField{
 		{
-			Title:	title,
-			Value:	value,
-			Short:	false,
+			Title: title,
+			Value: value,
+			Short: false,
 		},
 	}
 	resJson, err := json.Marshal(&original)
@@ -93,15 +97,15 @@ func (i *interactiveMessageUsecase) MakeSlackResponse(req events.APIGatewayProxy
 	action := message.ActionCallback.AttachmentActions[0]
 	switch action.Name {
 	case ActionAcOn:
-		title := "TURN ON AN AIR-CONDITIONER..."
+		title := "OK, TURN ON AN AIR-CONDITIONER!!"
 		PutAcSettings(OperationCool)
 		return makeResponse(&res, message.OriginalMessage, title, "")
 	case ActionHeaterOn:
-		title := "TURN ON A HEATER..."
+		title := "OK, TURN ON A HEATER!!"
 		PutAcSettings(OperationWarm)
 		return makeResponse(&res, message.OriginalMessage, title, "")
 	case ActionTurnedOff:
-		title := "TURN OFF..."
+		title := "OK, TURN OFF..."
 		PutAcSettings(OperationStop)
 		return makeResponse(&res, message.OriginalMessage, title, "")
 	case ActionCancel:
@@ -115,25 +119,25 @@ func (i *interactiveMessageUsecase) MakeSlackResponse(req events.APIGatewayProxy
 }
 
 func (i *interactiveMessageUsecase) verify(request events.APIGatewayProxyRequest) error {
-		httpHeader := http.Header{}
-		for key, value := range request.Headers {
-			httpHeader.Set(key, value)
-		}
-		sv, err := slack.NewSecretsVerifier(httpHeader, i.signingSecrets)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
+	httpHeader := http.Header{}
+	for key, value := range request.Headers {
+		httpHeader.Set(key, value)
+	}
+	sv, err := slack.NewSecretsVerifier(httpHeader, i.signingSecrets)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
 
-		if _, err := sv.Write([]byte(request.Body)); err != nil {
-			log.Error(err)
-			return err
-		}
+	if _, err := sv.Write([]byte(request.Body)); err != nil {
+		log.Error(err)
+		return err
+	}
 
-		if err := sv.Ensure(); err != nil {
-			log.Error("Invalid SIGNING_SECRETS")
-			return err
-		}
+	if err := sv.Ensure(); err != nil {
+		log.Error("Invalid SIGNING_SECRETS")
+		return err
+	}
 
-		return nil
+	return nil
 }
