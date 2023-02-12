@@ -18,6 +18,10 @@ export class AcControlApiStack extends cdk.Stack {
       parameterName: '/my-butler/labor-service/appliance-id',
     });
 
+    const iftttApiKey = ssm.StringParameter.fromStringParameterAttributes(this, 'IftttApiKey', {
+      parameterName: '/my-butler/labor-service/ifttt-api-key',
+    });
+
     // Create lambda function
     const lambdaFunction: Function = new Function(this, "ac-control-function", {
       functionName: "ac-control-function",
@@ -30,6 +34,7 @@ export class AcControlApiStack extends cdk.Stack {
         "SIGNING_SECRETS": signingSecrets.stringValue,
         "REMO_TOKEN": remoToken.stringValue,
         "APPLIANCE_ID": applianceId.stringValue,
+        "IFTTT_API_KEY": iftttApiKey.stringValue,
       }
     })
 

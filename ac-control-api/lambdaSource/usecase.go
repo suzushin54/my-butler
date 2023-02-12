@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	ActionAcOn      = "ac_on"
-	ActionHeaterOn  = "heater_on"
-	ActionTurnedOff = "ac_off"
-	ActionCancel    = "cancel"
+	ActionAcOn         = "ac_on"
+	ActionHeaterOn     = "heater_on"
+	ActionBathHeaterOn = "bath-ac"
+	ActionTurnedOff    = "ac_off"
+	ActionCancel       = "cancel"
 )
 
 const (
@@ -68,19 +69,15 @@ func makeResponse(res *events.APIGatewayProxyResponse, original slack.Message, t
 
 func (i *interactiveMessageUsecase) MakeSlackResponse(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	res := events.APIGatewayProxyResponse{}
-
 	str, _ := url.QueryUnescape(req.Body)
 	str = strings.Replace(str, "payload=", "", 1)
-	//log.Infof("str:%v type:%T", str, str)
+
 	var message slack.InteractionCallback
 	// Requestをslack.InteractiveCallback型にParseして利用していく
 	if err := json.Unmarshal([]byte(str), &message); err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
-			//Headers:           nil,
-			//MultiValueHeaders: nil,
-			Body: "json error",
-			//IsBase64Encoded:   false,
+			Body:       "json error",
 		}, nil
 	}
 
@@ -97,12 +94,16 @@ func (i *interactiveMessageUsecase) MakeSlackResponse(req events.APIGatewayProxy
 	action := message.ActionCallback.AttachmentActions[0]
 	switch action.Name {
 	case ActionAcOn:
-		title := "OK, TURN ON AN AIR-CONDITIONER!!"
+		title := "OK, TURN ON AIR-CONDITIONER!!"
 		PutAcSettings(OperationCool)
 		return makeResponse(&res, message.OriginalMessage, title, "")
 	case ActionHeaterOn:
-		title := "OK, TURN ON A HEATER!!"
+		title := "OK, TURN ON HEATER!!"
 		PutAcSettings(OperationWarm)
+		return makeResponse(&res, message.OriginalMessage, title, "")
+	case ActionBathHeaterOn:
+		title := "OK, TURN ON BATH HEATER!!"
+		IFTTTExec(ActionBathHeaterOn)
 		return makeResponse(&res, message.OriginalMessage, title, "")
 	case ActionTurnedOff:
 		title := "OK, TURN OFF..."

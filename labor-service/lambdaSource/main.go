@@ -5,23 +5,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
-	"strconv"
-
-	"github.com/labstack/gommon/log"
-	"github.com/nlopes/slack"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/labstack/gommon/log"
+	"github.com/nlopes/slack"
 )
 
 const (
-	ActionAcOn = "ac_on"
-	ActionHeaterOn = "heater_on"
-	ActionTurnedOff = "ac_off"
-	ActionCancel = "cancel"
+	ActionAcOn         = "ac_on"
+	ActionHeaterOn     = "heater_on"
+	ActionBathHeaterOn = "bath_heater_on"
+	ActionTurnedOff    = "ac_off"
+	ActionCancel       = "cancel"
 )
 
 const (
@@ -34,7 +35,7 @@ const (
 	SlackName = "R2-D2"
 )
 
-// for request parse
+// ApiEvent for request parse
 type ApiEvent struct {
 	Type       string     `json:"type"`
 	Text       string     `json:"text"`
@@ -56,7 +57,6 @@ func main() {
 
 func laborServiceHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	values, _ := url.ParseQuery(request.Body)
-	// Logging a request from slack server
 	log.Infof("values:%v type:%T", values, values)
 
 	response := events.APIGatewayProxyResponse{}
@@ -116,9 +116,9 @@ func laborServiceHandler(ctx context.Context, request events.APIGatewayProxyRequ
 		temperature := GetTemperature()
 
 		attachment := slack.Attachment{
-			Color: "#f9a41b",
+			Color:      "#f9a41b",
 			CallbackID: "server",
-			Text: "BEEP! ROOM TEMPERATURE: " + strconv.FormatFloat(temperature, 'f', 1, 64) + "℃ ..MAY I HELP YOU?",
+			Text:       "BEEP! ROOM TEMPERATURE: " + strconv.FormatFloat(temperature, 'f', 1, 64) + "℃ ..MAY I HELP YOU?",
 			Actions: []slack.AttachmentAction{
 				{
 					Name:  ActionAcOn,
@@ -129,6 +129,12 @@ func laborServiceHandler(ctx context.Context, request events.APIGatewayProxyRequ
 				{
 					Name:  ActionHeaterOn,
 					Text:  "暖房をつけて",
+					Type:  "button",
+					Style: "danger",
+				},
+				{
+					Name:  ActionBathHeaterOn,
+					Text:  "浴室の暖房をつけて",
 					Type:  "button",
 					Style: "danger",
 				},
