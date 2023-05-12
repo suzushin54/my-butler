@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "ac-control-api"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "dependabot"
+  - package-ecosystem: "npm"
+    directory: "labor-service"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "dependabot"
